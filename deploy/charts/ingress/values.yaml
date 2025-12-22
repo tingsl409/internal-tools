@@ -1,0 +1,193 @@
+replicaCount: 1
+
+image:
+  repository: registry.domain.me/nginx
+  pullPolicy: IfNotPresent
+  tag: 1.0.0
+
+nodeSelector:
+  worker: ingress
+
+tolerations:
+  - key: "worker"
+    operator: "Equal"
+    value: "ingress"
+    effect: "NoSchedule"
+
+affinity: {}
+
+# Nginx configuration
+nginx:
+  config:
+    enabled: true
+    content: |
+      events {
+          worker_connections 1024;
+      }
+
+      http {
+          include /etc/nginx/mime.types;
+          default_type application/octet-stream;
+          
+          upstream argocd {
+              server argocd-server.argocd.svc.cluster.local:80;
+          }
+
+          upstream grafana {
+              server kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80;
+          }
+
+          upstream alertmanager {
+              server kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093;
+          }
+
+          upstream prometheus {
+              server kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090;
+          }
+
+          upstream intools {
+              server internal-tools.dev-internal-tools.svc.cluster.local:8080;
+          }
+          
+          server {
+              listen 443 ssl default_server;
+              server_name _;
+
+              ssl_certificate /opt/bitnami/nginx/conf/server.crt;
+              ssl_certificate_key /opt/bitnami/nginx/conf/server.key;
+
+              location / {
+                  return 404;
+              }
+
+              location /health_check {
+                  return 200;
+              }
+          }
+          
+          server {
+              listen 443 ssl;
+              server_name argocd.domain.me;
+              
+              ssl_certificate /opt/bitnami/nginx/conf/server.crt;
+              ssl_certificate_key /opt/bitnami/nginx/conf/server.key;
+              
+              location / {
+                  proxy_pass http://argocd;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection "upgrade";
+                  proxy_http_version 1.1;
+              }
+          }
+
+          server {
+              listen 443 ssl;
+              server_name grafana.domain.me;
+              
+              ssl_certificate /opt/bitnami/nginx/conf/server.crt;
+              ssl_certificate_key /opt/bitnami/nginx/conf/server.key;
+              
+              location / {
+                  proxy_pass http://grafana;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+          server {
+              listen 443 ssl;
+              server_name alertmanager.domain.me;
+              
+              ssl_certificate /opt/bitnami/nginx/conf/server.crt;
+              ssl_certificate_key /opt/bitnami/nginx/conf/server.key;
+              
+              location / {
+                  proxy_pass http://alertmanager;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+          server {
+              listen 443 ssl;
+              server_name prometheus.domain.me;
+              
+              ssl_certificate /opt/bitnami/nginx/conf/server.crt;
+              ssl_certificate_key /opt/bitnami/nginx/conf/server.key;
+              
+              location / {
+                  proxy_pass http://prometheus;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+          server {
+              listen 443 ssl;
+              server_name intools.domain.me;
+              
+              ssl_certificate /opt/bitnami/nginx/conf/server.crt;
+              ssl_certificate_key /opt/bitnami/nginx/conf/server.key;
+              
+              location / {
+                  proxy_pass http://intools;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+      }
+
+service:
+  type: NodePort
+  port: 443
+  nodePort: 30080
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /health_check
+    port: http
+    scheme: HTTPS
+readinessProbe:
+  httpGet:
+    path: /health_check
+    port: http
+    scheme: HTTPS
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+volumes: []
+volumeMounts: []

@@ -1,0 +1,54 @@
+on:
+  push:
+    paths:
+      - 'golang/**'
+jobs:
+  test:
+    runs-on: poc_runner
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+          
+      - name: Run tests
+        run: |
+          cd golang
+          go mod tidy
+          go test -v
+
+  build: 
+    runs-on: poc_runner
+    needs: test
+    steps: 
+      - uses: actions/checkout@v4
+
+      - name: Build and push Docker image
+        run: |
+          cd golang
+          docker build --network=host -t registry.domain.me/internal-tools:${{ github.sha }} .
+          docker push registry.domain.me/internal-tools:${{ github.sha }}
+
+  deploy:
+    runs-on: poc_runner
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          
+      - name: Update Helm chart
+        run: |
+          # Update image tag in values.yaml
+          sed -i "s|repository: .*|repository: registry.domain.me/internal-tools|g" deploy/charts/internal-tools/values.yaml
+          sed -i "s|tag: .*|tag: \"${{ github.sha }}\"|g" deploy/charts/internal-tools/values.yaml
+          
+      - name: Commit and push chart updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add deploy/charts/internal-tools/values.yaml
+          git commit -m "Update internal-tools chart to ${{ github.sha }}" || exit 0
+          git push -u origin main

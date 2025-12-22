@@ -1,0 +1,41 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "internal-tools.fullname" . }}
+  labels:
+    {{- include "internal-tools.labels" . | nindent 4 }}
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["security.internal.io"]
+  resources: ["customdenies"]
+  verbs: ["get", "list", "watch", "update"]
+- apiGroups: ["security.internal.io"]
+  resources: ["customdenies/status"]
+  verbs: ["update"]
+- apiGroups: ["projectcalico.org"]
+  resources: ["networkpolicies", "tier.networkpolicies"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["projectcalico.org"]
+  resources: ["tiers"]
+  verbs: ["get", "list", "watch"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "internal-tools.fullname" . }}
+  labels:
+    {{- include "internal-tools.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "internal-tools.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "internal-tools.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

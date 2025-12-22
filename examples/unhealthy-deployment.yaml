@@ -1,0 +1,30 @@
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: one-per-node-app
+  labels:
+    app: one-per-node-app
+spec:
+  replicas: 3  # Set to expected number of nodes + 1
+  selector:
+    matchLabels:
+      app: one-per-node-app
+  template:
+    metadata:
+      labels:
+        app: one-per-node-app
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: one-per-node-app
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: app
+        image: nginx:alpine
+        ports:
+        - containerPort: 80

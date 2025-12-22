@@ -1,0 +1,35 @@
+{{- if .Values.alertmanagerConfig.enabled }}
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: {{ include "internal-tools.fullname" . }}-alerts
+  labels:
+    alertmanagerConfig: kube-prometheus-stack-alertmanager
+    {{- include "internal-tools.labels" . | nindent 4 }}
+    {{- with .Values.alertmanagerConfig.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.alertmanagerConfig.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  route:
+    groupBy: ['alertname', 'service']
+    groupWait: 10s
+    groupInterval: 10s
+    repeatInterval: 1h
+    receiver: 'slack-notifications'
+    matchers:
+    - name: service
+      value: {{ include "internal-tools.fullname" . }}
+  receivers:
+  - name: 'slack-notifications'
+    slackConfigs:
+    - apiURL:
+        key: webhook-url
+        name: {{ .Values.alertmanagerConfig.slackSecret }}
+      channel: {{ .Values.alertmanagerConfig.slackChannel | default "#alert" | quote }}
+      title: 'Alert: {{ "{{ range .Alerts }}" }}{{ "{{ .Annotations.summary }}" }}{{ "{{ end }}" }}'
+      text: '{{ "{{ range .Alerts }}" }}{{ "{{ .Annotations.description }}" }}{{ "{{ end }}" }}'
+{{- end }}

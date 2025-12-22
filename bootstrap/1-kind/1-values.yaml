@@ -1,0 +1,36 @@
+---
+
+## kind create cluster --config values.yaml --name dev
+#
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  image: kindest/node:v1.33.0
+- role: worker
+  image: kindest/node:v1.33.0
+- role: worker
+  image: kindest/node:v1.33.0
+- role: worker
+  image: kindest/node:v1.33.0
+  extraPortMappings:
+  - containerPort: 30080
+    hostPort: 443
+    protocol: TCP
+  labels:
+    worker: ingress
+  kubeadmConfigPatches:
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      taints:
+      - key: "worker"
+        value: "ingress"
+        effect: "NoSchedule"
+networking:
+  disableDefaultCNI: true
+  podSubnet: 10.200.0.0/16
+  ## Change to approriate value according to your setup
+  #
+  apiServerAddress: "192.168.1.252"
+  apiServerPort: 6443

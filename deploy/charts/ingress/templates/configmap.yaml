@@ -1,0 +1,11 @@
+{{- if .Values.nginx.config.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ingress.fullname" . }}-nginx-config
+  labels:
+    {{- include "ingress.labels" . | nindent 4 }}
+data:
+  nginx.conf: |
+{{ .Values.nginx.config.content | indent 4 }}
+{{- end }}

@@ -1,0 +1,15 @@
+---
+
+apiVersion: security.internal.io/v1
+kind: CustomDeny
+metadata:
+  name: deny-nginx-one-to-two
+  labels:
+    test: "customdeny"
+spec:
+  sourceNamespace: "one"
+  sourceLabels:
+    app.kubernetes.io/instance: nginx-one
+  targetNamespace: "two"
+  targetLabels:
+    app.kubernetes.io/instance: nginx-two

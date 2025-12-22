@@ -1,0 +1,42 @@
+{{- if .Values.prometheusRules.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "internal-tools.fullname" . }}-alerts
+  labels:
+    release: kube-prometheus-stack
+    {{- include "internal-tools.labels" . | nindent 4 }}
+    {{- with .Values.prometheusRules.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.prometheusRules.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  groups:
+  - name: {{ include "internal-tools.fullname" . }}.rules
+    rules:
+    - alert: KubernetesAPIServerDown
+      expr: kubernetes_apiserver_up == 0
+      for: {{ .Values.prometheusRules.apiServerDownFor | default "1m" }}
+      labels:
+        severity: critical
+        service: {{ include "internal-tools.fullname" . }}
+        namespace: {{ .Release.Namespace }}
+      annotations:
+        summary: "Kubernetes API Server is unreachable"
+        description: "The {{ include "internal-tools.fullname" . }} application cannot reach the Kubernetes API server."
+
+    - alert: UnhealthyDeployments
+      expr: deployment_spec_replicas > deployment_status_replicas_available
+      for: {{ .Values.prometheusRules.unhealthyDeploymentFor | default "2m" }}
+      labels:
+        severity: warning
+        service: {{ include "internal-tools.fullname" . }}
+        namespace: {{ .Release.Namespace }}
+        deployment: "{{ "{{ $labels.deployment }}" }}"
+      annotations:
+        summary: "Deployment {{ "{{ $labels.deployment }}" }} is unhealthy"
+        description: "Deployment {{ "{{ $labels.deployment }}" }} in namespace {{ "{{ $labels.namespace }}" }} has fewer available than desired replicas."
+{{- end }}

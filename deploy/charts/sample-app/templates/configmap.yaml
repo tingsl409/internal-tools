@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sample-app.fullname" . }}-html
+  labels:
+    {{- include "sample-app.labels" . | nindent 4 }}
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Hello World</title>
+    </head>
+    <body>
+        <h1>Hello World from {{ .Release.Namespace }}</h1>
+    </body>
+    </html>

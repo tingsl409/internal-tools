@@ -1,0 +1,37 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: customdenies.security.internal.io
+spec:
+  group: security.internal.io
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              sourceNamespace:
+                type: string
+              sourceLabels:
+                type: object
+                additionalProperties:
+                  type: string
+              targetNamespace:
+                type: string
+              targetLabels:
+                type: object
+                additionalProperties:
+                  type: string
+            required:
+            - sourceNamespace
+            - targetNamespace
+  scope: Namespaced
+  names:
+    plural: customdenies
+    singular: customdeny
+    kind: CustomDeny

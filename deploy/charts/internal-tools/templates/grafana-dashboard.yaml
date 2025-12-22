@@ -1,0 +1,232 @@
+{{- if .Values.grafanaDashboard.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "internal-tools.fullname" . }}-dashboard
+  namespace: {{ .Values.grafanaDashboard.namespace | default .Release.Namespace }}
+  labels:
+    grafana_dashboard: "1"
+    {{- include "internal-tools.labels" . | nindent 4 }}
+    {{- with .Values.grafanaDashboard.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.grafanaDashboard.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  kubernetes-deployment-monitor.json: |
+    {
+      "id": null,
+      "title": "{{ .Values.grafanaDashboard.title }}",
+      "tags": {{ .Values.grafanaDashboard.tags | toJson }},
+      "style": "dark",
+      "timezone": "browser",
+      "refresh": "{{ .Values.grafanaDashboard.refresh }}",
+      "time": {
+        "from": "{{ .Values.grafanaDashboard.timeFrom }}",
+        "to": "{{ .Values.grafanaDashboard.timeTo }}"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "API Server Status",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "kubernetes_apiserver_up",
+              "refId": "A"
+            }
+          ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": 0
+                    },
+                    {
+                      "color": "green",
+                      "value": 1
+                    }
+                  ]
+                },
+                "mappings": [
+                  {
+                    "options": {
+                      "0": {
+                        "text": "DOWN"
+                      },
+                      "1": {
+                        "text": "UP"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "id": 2,
+            "title": "Deployment Replica Status",
+            "type": "table",
+            "targets": [
+              {
+                "expr": "deployment_spec_replicas",
+                "refId": "A",
+                "format": "table"
+              },
+              {
+                "expr": "deployment_status_replicas_available",
+                "refId": "B",
+                "format": "table"
+              }
+            ],
+            "transformations": [
+              {
+                "id": "merge",
+                "options": {}
+              },
+              {
+                "id": "organize",
+                "options": {
+                  "excludeByName": {
+                    "Time": true,
+                    "__name__": true
+                  },
+                  "indexByName": {
+                    "namespace": 0,
+                    "deployment": 1,
+                    "Value #A": 2,
+                    "Value #B": 3
+                  },
+                  "renameByName": {
+                    "Value #A": "Desired",
+                    "Value #B": "Available"
+                  }
+                }
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 12,
+              "y": 0
+            }
+          },
+          {
+            "id": 3,
+            "title": "Deployment Availability Over Time",
+            "type": "timeseries",
+            "targets": [
+              {
+                "expr": "deployment_status_replicas_available",
+                "refId": "A",
+                "legendFormat": "{{ "{{" }}namespace{{ "}}" }}/{{ "{{" }}deployment{{ "}}" }} - Available"
+              },
+              {
+                "expr": "deployment_spec_replicas",
+                "refId": "B",
+                "legendFormat": "{{ "{{" }}namespace{{ "}}" }}/{{ "{{" }}deployment{{ "}}" }} - Desired"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "drawStyle": "line",
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "fillOpacity": 10,
+                  "pointSize": 5,
+                  "showPoints": "never"
+                },
+                "min": 0,
+                "unit": "short"
+              }
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 8
+            }
+          },
+          {
+            "id": 4,
+            "title": "Unhealthy Deployments",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "count(deployment_spec_replicas > deployment_status_replicas_available)",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            },
+            "gridPos": {
+              "h": 4,
+              "w": 12,
+              "x": 0,
+              "y": 16
+            }
+          },
+          {
+            "id": 5,
+            "title": "Total Deployments",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "count(deployment_spec_replicas)",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                }
+              }
+            },
+            "gridPos": {
+              "h": 4,
+              "w": 12,
+              "x": 12,
+              "y": 16
+            }
+          }
+      ],
+      "schemaVersion": 27,
+      "version": 1
+    }
+{{- end }}
