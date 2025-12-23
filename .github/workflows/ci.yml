@@ -1,7 +1,10 @@
 on:
   push:
+    branches:
+      - main
     paths:
       - 'golang/**'
+  workflow_dispatch:
 jobs:
   test:
     runs-on: poc_runner
@@ -51,4 +54,4 @@ jobs:
           git config --local user.name "GitHub Action"
           git add deploy/charts/internal-tools/values.yaml
           git commit -m "Update internal-tools chart to ${{ github.sha }}" || exit 0
-          git push -u origin main
+          git push

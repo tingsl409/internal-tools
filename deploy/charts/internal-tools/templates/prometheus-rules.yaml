@@ -38,5 +38,5 @@ spec:
         deployment: "{{ "{{ $labels.deployment }}" }}"
       annotations:
         summary: "Deployment {{ "{{ $labels.deployment }}" }} is unhealthy"
-        description: "Deployment {{ "{{ $labels.deployment }}" }} in namespace {{ "{{ $labels.namespace }}" }} has fewer available than desired replicas."
+        description: "Deployment {{ "{{ $labels.deployment }}" }} in namespace {{ "{{ $labels.deployment_namespace }}" }} has fewer available than desired replicas."
 {{- end }}
