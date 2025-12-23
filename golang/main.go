@@ -43,7 +43,6 @@ var (
 	}, []string{"namespace", "status"})
 )
 
-//test
 func main() {
 	// Parse command-line flag for optional kubeconfig file.
 	kubeconfig := flag.String("kubeconfig", "", "Path to kubeconfig (empty for in-cluster)")
