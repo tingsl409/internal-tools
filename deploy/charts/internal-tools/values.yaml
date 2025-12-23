@@ -11,7 +11,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "c340c528826a19994983a2e47f8a857b639e3903"
+  tag: "fdd483b97b0418d116040d1600a30edac4846935"
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -142,7 +142,7 @@ prometheusRules:
   # Duration before API server down alert fires
   apiServerDownFor: "1m"
   # Duration before unhealthy deployment alert fires
-  unhealthyDeploymentFor: "2m"
+  unhealthyDeploymentFor: "1m"
   # Additional labels for PrometheusRule
   labels: {}
   # Additional annotations for PrometheusRule

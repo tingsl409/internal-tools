@@ -34,7 +34,7 @@ data:
           "type": "stat",
           "targets": [
             {
-              "expr": "kubernetes_apiserver_up",
+              "expr": "max(kubernetes_apiserver_up)",
               "refId": "A"
             }
           ],
@@ -72,32 +72,24 @@ data:
             },
             "gridPos": {
               "h": 8,
-              "w": 12,
+              "w": 24,
               "x": 0,
               "y": 0
             }
           },
           {
             "id": 2,
-            "title": "Deployment Replica Status",
+            "title": "Deployment Status",
             "type": "table",
             "targets": [
               {
-                "expr": "deployment_spec_replicas",
+                "expr": "deployment_spec_replicas - on(deployment_namespace, deployment) deployment_status_replicas_available",
                 "refId": "A",
-                "format": "table"
-              },
-              {
-                "expr": "deployment_status_replicas_available",
-                "refId": "B",
-                "format": "table"
+                "format": "table",
+                "instant": true
               }
             ],
             "transformations": [
-              {
-                "id": "merge",
-                "options": {}
-              },
               {
                 "id": "organize",
                 "options": {
@@ -106,57 +98,20 @@ data:
                     "__name__": true
                   },
                   "indexByName": {
-                    "namespace": 0,
+                    "deployment_namespace": 0,
                     "deployment": 1,
-                    "Value #A": 2,
-                    "Value #B": 3
+                    "Value": 2
                   },
                   "renameByName": {
-                    "Value #A": "Desired",
-                    "Value #B": "Available"
+                    "deployment_namespace": "Namespace",
+                    "deployment": "Deployment",
+                    "Value": "Pending Pods"
                   }
                 }
               }
             ],
-            "gridPos": {
-              "h": 8,
-              "w": 12,
-              "x": 12,
-              "y": 0
-            }
-          },
-          {
-            "id": 3,
-            "title": "Deployment Availability Over Time",
-            "type": "timeseries",
-            "targets": [
-              {
-                "expr": "deployment_status_replicas_available",
-                "refId": "A",
-                "legendFormat": "{{ "{{" }}namespace{{ "}}" }}/{{ "{{" }}deployment{{ "}}" }} - Available"
-              },
-              {
-                "expr": "deployment_spec_replicas",
-                "refId": "B",
-                "legendFormat": "{{ "{{" }}namespace{{ "}}" }}/{{ "{{" }}deployment{{ "}}" }} - Desired"
-              }
-            ],
             "fieldConfig": {
-              "defaults": {
-                "color": {
-                  "mode": "palette-classic"
-                },
-                "custom": {
-                  "drawStyle": "line",
-                  "lineInterpolation": "linear",
-                  "lineWidth": 1,
-                  "fillOpacity": 10,
-                  "pointSize": 5,
-                  "showPoints": "never"
-                },
-                "min": 0,
-                "unit": "short"
-              }
+              "defaults": {}
             },
             "gridPos": {
               "h": 8,
@@ -195,7 +150,7 @@ data:
               }
             },
             "gridPos": {
-              "h": 4,
+              "h": 8,
               "w": 12,
               "x": 0,
               "y": 16
@@ -219,7 +174,7 @@ data:
               }
             },
             "gridPos": {
-              "h": 4,
+              "h": 8,
               "w": 12,
               "x": 12,
               "y": 16

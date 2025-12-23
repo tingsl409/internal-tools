@@ -32,17 +32,18 @@ var (
 	deploymentSpecReplicas = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "deployment_spec_replicas",
 		Help: "Desired replicas for a deployment",
-	}, []string{"namespace", "deployment"})
+	}, []string{"deployment_namespace", "deployment"})
 	deploymentAvailableReplicas = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "deployment_status_replicas_available",
 		Help: "Available replicas for a deployment",
-	}, []string{"namespace", "deployment"})
+	}, []string{"deployment_namespace", "deployment"})
 	customDenyPolicies = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "custom_deny_policies_total",
 		Help: "Number of CustomDeny operations",
 	}, []string{"namespace", "status"})
 )
 
+//test
 func main() {
 	// Parse command-line flag for optional kubeconfig file.
 	kubeconfig := flag.String("kubeconfig", "", "Path to kubeconfig (empty for in-cluster)")
